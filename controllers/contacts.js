@@ -2,7 +2,21 @@ const { Contact } = require('../models/contact');
 const { HttpError, ctrlWrapper } = require('../utils');
 
 const getAllContacts = async (req, res, next) => {
-  const result = await Contact.find();
+  console.log(req.query);
+  const { _id: owner } = req.user;
+
+  const { page = 1, limit = 20 } = req.query;
+  const skip = (page - 1) * limit;
+
+  const excludedFields = ['page', 'limit'];
+
+  const queryObj = { ...req.query };
+  excludedFields.forEach((field) => delete queryObj[field]);
+
+  const result = await Contact.find({ ...queryObj, owner })
+    .skip(skip)
+    .limit(limit);
+
   res.json(result);
 };
 
@@ -17,7 +31,9 @@ const getContactById = async (req, res, next) => {
 };
 
 const addContact = async (req, res, next) => {
-  const result = await Contact.create(req.body);
+  const { _id: owner } = req.user;
+
+  const result = await Contact.create({ ...req.body, owner });
   res.status(201).json(result);
 };
 
@@ -46,7 +62,7 @@ const updateContact = async (req, res, next) => {
 
 const updateStatusContact = async (req, res, next) => {
   const { contactId } = req.params;
-  console.log(req.params);
+
   const result = await Contact.findByIdAndUpdate(contactId, req.body, {
     new: true,
   });
