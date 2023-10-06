@@ -1,8 +1,7 @@
 const { Contact } = require('../models/contact');
 const { HttpError, ctrlWrapper } = require('../utils');
 
-const getAllContacts = async (req, res, next) => {
-  console.log(req.query);
+const getAllContacts = async (req, res) => {
   const { _id: owner } = req.user;
 
   const { page = 1, limit = 20 } = req.query;
@@ -20,39 +19,46 @@ const getAllContacts = async (req, res, next) => {
   res.json(result);
 };
 
-const getContactById = async (req, res, next) => {
+const getContactById = async (req, res) => {
   const { contactId } = req.params;
-  console.log(contactId);
-  const result = await Contact.findById(contactId);
+  const { _id: owner } = req.user;
+
+  const result = await Contact.findOne({ _id: contactId, owner });
   if (!result) {
     throw HttpError(404, 'Not found');
   }
   res.json(result);
 };
 
-const addContact = async (req, res, next) => {
+const addContact = async (req, res) => {
   const { _id: owner } = req.user;
 
   const result = await Contact.create({ ...req.body, owner });
   res.status(201).json(result);
 };
 
-const deleteContact = async (req, res, next) => {
+const deleteContact = async (req, res) => {
   const { contactId } = req.params;
-  console.log(contactId);
-  const result = await Contact.findByIdAndRemove(contactId);
+  const { _id: owner } = req.user;
+
+  const result = await Contact.findOneAndRemove({ _id: contactId, owner });
   if (!result) {
     throw HttpError(404, 'Not found');
   }
   res.json('Deleted successfully');
 };
 
-const updateContact = async (req, res, next) => {
+const updateContact = async (req, res) => {
   const { contactId } = req.params;
-  console.log(req.params);
-  const result = await Contact.findByIdAndUpdate(contactId, req.body, {
-    new: true,
-  });
+  const { _id: owner } = req.user;
+
+  const result = await Contact.findOneAndUpdate(
+    { _id: contactId, owner },
+    req.body,
+    {
+      new: true,
+    }
+  );
 
   if (!result) {
     throw HttpError(404, 'Not found');
@@ -60,12 +66,17 @@ const updateContact = async (req, res, next) => {
   res.json(result);
 };
 
-const updateStatusContact = async (req, res, next) => {
+const updateStatusContact = async (req, res) => {
   const { contactId } = req.params;
+  const { _id: owner } = req.user;
 
-  const result = await Contact.findByIdAndUpdate(contactId, req.body, {
-    new: true,
-  });
+  const result = await Contact.findOneAndUpdate(
+    { _id: contactId, owner },
+    req.body,
+    {
+      new: true,
+    }
+  );
 
   if (!result) {
     throw HttpError(404, 'Not found');
